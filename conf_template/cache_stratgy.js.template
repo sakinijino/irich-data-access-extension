@@ -1,0 +1,15 @@
+CACHE_STRATGY_CONFIG = {
+  Record: {
+    "iRichApp.TASK": {
+      useCache: true,
+      maxAge: 50 //ms
+    }
+  },
+
+  Query: {
+    "All Task": {
+      useCache: true,
+      maxAge: 50 //ms
+    }
+  }
+}

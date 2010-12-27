@@ -10,18 +10,26 @@ iRich.CachedStore = SC.Store.extend({
   // 
   
   /* { entryTime : new Date() */
-  queryCacheInfos: null,
+  queryCaches: null,
+  queryRegistry: null,
 
-  readQueryCacheInfo :function(query) {
-    return this.queryCacheInfos[SC.guidFor(query)] || {}
+  registerQuery: function(query) {
+    if (this.queryRegistry[query.getName()]!=null &&
+      this.queryRegistry[query.getName()] !== query)
+      throw new Error("Query name %@ is conflicted".fmt(query.getName()));
+    this.queryRegistry[query.getName()] = query;
+  },
+
+  readQueryCacheInfo: function(query) {
+    return this.queryCaches[SC.guidFor(query)] || {}
   },
 
   refreshQueryCacheInfo: function(query) {
     var guid = SC.guidFor(query)
     var now = new Date();
-    this.queryCacheInfos[guid] ? 
-      this.queryCacheInfos[guid].entryTime =now:
-      this.queryCacheInfos[guid] = {entryTime: now};
+    this.queryCaches[guid] ? 
+      this.queryCaches[guid].entryTime =now:
+      this.queryCaches[guid] = {entryTime: now};
     return this;
   },
 
@@ -65,17 +73,17 @@ iRich.CachedStore = SC.Store.extend({
   // 
 
   /* { entryTime : new Date() */
-  recordCacheInfos: null, 
+  recordCaches: null, 
 
   readRecordCacheInfo :function(storeKey) {
-    return this.recordCacheInfos[storeKey] || {}
+    return this.recordCaches[storeKey] || {}
   },
 
   refreshRecordCacheInfo: function(storeKey) {
     var now = new Date();
-    this.recordCacheInfos[storeKey] ? 
-      this.recordCacheInfos[storeKey].entryTime =now:
-      this.recordCacheInfos[storeKey] = {entryTime: now};
+    this.recordCaches[storeKey] ? 
+      this.recordCaches[storeKey].entryTime =now:
+      this.recordCaches[storeKey] = {entryTime: now};
     return this;
   },
 
@@ -155,8 +163,9 @@ iRich.CachedStore = SC.Store.extend({
   // 
 
   reset: function() {
-    this.recordCacheInfos = {};
-    this.queryCacheInfos = {};
+    this.recordCaches = {};
+    this.queryCaches = {};
+    this.queryRegistry = {};
     
     this.superclass();
   },
@@ -177,4 +186,21 @@ iRich.CachedStore = SC.Store.extend({
       return this._findRecord(recordType, id);
     }
   },
+
+  loadCacheConfig: function(conf) {
+    conf = conf ? conf : CACHE_STRATGY_CONFIG
+    if (conf.Record) {
+      for (var rname in conf.Record) {
+        var r = SC.objectForPropertyPath(rname)
+        if (r) r.setMaxAge(conf.Record[rname].maxAge)
+      }
+    }
+
+    if (conf.Query) {
+      for (var qname in conf.Query) {
+        var q = this.queryRegistry[qname]
+        if (q) q.setMaxAge(conf.Query[qname].maxAge)
+      }
+    }
+  }
 });

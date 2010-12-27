@@ -4,11 +4,11 @@ iRichApp = SC.Application.create({
   NAMESPACE: 'Irich',
   VERSION: 'CachedStore Test',
   store: SC.Store.create().from(SC.Record.fixtures)
-}) ;
+});
 
 module("iRich.CachedStore", {
   setup: function() {
-
+    iRichApp.User = SC.Record.extend({email: SC.Record.attr(String), description: SC.Record.attr(String)});
     iRichApp.Task = SC.Record.extend({isDone: SC.Record.attr(Boolean), description: SC.Record.attr(String)});
 
     iRichApp.Task.CONSTS = {
@@ -53,6 +53,7 @@ module("iRich.CachedStore", {
     };
   },
   teardown: function() {
+    delete iRichApp.User;
     delete iRichApp.Task.FIXTURES;
     delete iRichApp.Task.CONSTS;
     delete iRichApp.Task;
@@ -60,6 +61,111 @@ module("iRich.CachedStore", {
     delete iRichApp.sleep;
   }
 });
+
+test("Query Registy", function(){
+  var store = iRich.CachedStore.create()
+  
+  var qt = SC.Query.build(SC.Query.REMOTE, iRichApp.Task);
+  qt.setName("All Task");
+  store.registerQuery(qt)
+
+  store.registerQuery(qt) // Register Same Query
+
+  var qu = SC.Query.build(SC.Query.REMOTE, iRichApp.User);
+  qu.setName("All User");
+
+  store.registerQuery(qu)
+})
+
+test("Query Registy Conflict", function(){
+  var store = iRich.CachedStore.create()
+
+  var throwed = false;
+  try {
+    var qt = SC.Query.build(SC.Query.REMOTE, iRichApp.Task);
+    qt.setName("All Task");
+    store.registerQuery(qt)
+
+    var qu = SC.Query.build(SC.Query.REMOTE, iRichApp.User);
+    qu.setName("All Task");
+    store.registerQuery(qu)
+  }
+  catch(e) {
+    throwed = true;
+  }
+  ok(throwed, "conflicted query name error throwed");
+})
+
+test("Cache Config Load", function(){
+  var store = iRich.CachedStore.create()
+
+  var qt = SC.Query.build(SC.Query.REMOTE, iRichApp.Task);
+  qt.setName("All Task");
+  store.registerQuery(qt)
+
+  var qu = SC.Query.build(SC.Query.REMOTE, iRichApp.User);
+  qu.setName("All User");
+  store.registerQuery(qu)
+
+  CACHE_STRATGY_CONFIG = {
+    Record: {
+      "iRichApp.Task": {
+        useCache: true,
+        maxAge: 50
+      },
+      "iRichApp.User": {
+      }
+    },
+
+    Query: {
+      "All Task": {
+        useCache: true,
+        maxAge: 50
+      },
+      "All User": {
+      }
+    }
+  }
+  store.loadCacheConfig();
+  delete CACHE_STRATGY_CONFIG;
+
+  ok(!iRichApp.User.cacheStratgy.useCache, "iRichApp User does not use Cache")
+  ok(iRichApp.Task.cacheStratgy.useCache, "iRichApp Task uses Cache")
+  equals(iRichApp.User.cacheStratgy.maxAge, 0, "iRichApp User maxAge 0")
+  equals(iRichApp.Task.cacheStratgy.maxAge, 50, "iRichApp Task maxAge 50")
+
+  ok(!qu.cacheStratgy.useCache, "All User Query does not use Cache")
+  ok(qt.cacheStratgy.useCache, "All Task Query uses Cache")
+  equals(qu.cacheStratgy.maxAge, 0, "All User Query maxAge 0")
+  equals(qt.cacheStratgy.maxAge, 50, "All Task Query maxAge 50")
+
+  store.loadCacheConfig({
+    Record: {
+      "iRichApp.User": {
+        maxAge: 50
+      }
+    }
+  });
+
+  ok(iRichApp.User.cacheStratgy.useCache, "iRichApp User uses Cache")
+  equals(iRichApp.User.cacheStratgy.maxAge, 50, "iRichApp User maxAge 50")
+
+  store.loadCacheConfig({
+    Record: {
+      "iRichApp.NoClass": {
+        maxAge: 50
+      }
+    },
+
+    Query: {
+      "All NoClass": {
+        useCache: true,
+        maxAge: 50
+      }
+    }
+  });
+
+})
 
 test("Record Cache", function() {
   var store = iRich.CachedStore.create().from(iRichApp.TaskDataSource.create());

@@ -6,8 +6,16 @@ SC.Record.mixin({
     useCache: false
   },
 
+  __extend: SC.Record.extend,
+  extend: function(){
+    var ret = SC.Record.__extend.apply(this, arguments);
+    ret.cacheStratgy = {};
+    SC.mixin(ret.cacheStratgy, SC.Record.cacheStratgy)
+    return ret;    
+  },
+
   setMaxAge: function(maxAge){
-    if (maxAge > 0) {
+    if (maxAge!=null && maxAge > 0) {
       this.cacheStratgy.maxAge = maxAge;
       this.cacheStratgy.useCache = true;
     } else {
