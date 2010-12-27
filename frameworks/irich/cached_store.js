@@ -1,6 +1,10 @@
 // ==========================================================================
 // sakinijino.com 
 // ==========================================================================
+sc_require("scuds/adapter")
+sc_require("record")
+sc_require("query")
+
 var iRich = iRich || {} ; 
 
 iRich.CachedStore = SC.Store.extend({

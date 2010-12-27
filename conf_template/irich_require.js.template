@@ -1,6 +1,0 @@
-IRICH_PATH = "irich_lib/"
-
-sc_require(IRICH_PATH + "record");
-sc_require(IRICH_PATH + "query");
-sc_require(IRICH_PATH + "cached_store");
-
