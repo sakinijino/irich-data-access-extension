@@ -1,7 +1,6 @@
 // ==========================================================================
 // sakinijino.com 
 // ==========================================================================
-sc_require("scuds/adapter")
 sc_require("record")
 sc_require("query")
 
@@ -15,14 +14,6 @@ iRich.CachedStore = SC.Store.extend({
   
   /* { entryTime : new Date() */
   queryCaches: null,
-  queryRegistry: null,
-
-  registerQuery: function(query) {
-    if (this.queryRegistry[query.getName()]!=null &&
-      this.queryRegistry[query.getName()] !== query)
-      throw new Error("Query name %@ is conflicted".fmt(query.getName()));
-    this.queryRegistry[query.getName()] = query;
-  },
 
   readQueryCacheInfo: function(query) {
     return this.queryCaches[SC.guidFor(query)] || {}
@@ -202,7 +193,7 @@ iRich.CachedStore = SC.Store.extend({
 
     if (conf.Query) {
       for (var qname in conf.Query) {
-        var q = this.queryRegistry[qname]
+        var q = SC.Query.getWithName(qname)
         if (q) q.setMaxAge(conf.Query[qname].maxAge)
       }
     }

@@ -1,5 +1,3 @@
-sc_require('../irich_require')
-
 iRichApp = SC.Application.create({
   NAMESPACE: 'Irich',
   VERSION: 'CachedStore Test',
@@ -8,8 +6,8 @@ iRichApp = SC.Application.create({
 
 module("iRich.CachedStoreWithConf", {
   setup: function() {
-
     iRichApp.Task = SC.Record.extend({isDone: SC.Record.attr(Boolean), description: SC.Record.attr(String)});
+    iRichApp.User = SC.Record.extend({isDone: SC.Record.attr(Boolean), description: SC.Record.attr(String)});
 
     iRichApp.Task.CONSTS = {
       OLD:  { "guid": "task-1", "description": "Item OLD", "isDone": false },
@@ -61,6 +59,78 @@ module("iRich.CachedStoreWithConf", {
   }
 });
 
+test("Cache Config Load", function(){
+  var store = iRich.CachedStore.create()
+
+  var qt = SC.Query.build(SC.Query.REMOTE, iRichApp.Task);
+  SC.Query.register(qt, "All Task")
+  var qu = SC.Query.build(SC.Query.REMOTE, iRichApp.User);
+  SC.Query.register(qu, "All User")
+
+  CACHE_STRATGY_CONFIG = {
+    Record: {
+      "iRichApp.Task": {
+        useCache: true,
+        maxAge: 50
+      },
+      "iRichApp.User": {
+      }
+    },
+
+    Query: {
+      "All Task": {
+        useCache: true,
+        maxAge: 50
+      },
+      "All User": {
+      }
+    }
+  }
+  store.loadCacheConfig();
+  delete CACHE_STRATGY_CONFIG;
+
+  ok(!iRichApp.User.cacheStratgy.useCache, "iRichApp User does not use Cache")
+  ok(iRichApp.Task.cacheStratgy.useCache, "iRichApp Task uses Cache")
+  equals(iRichApp.User.cacheStratgy.maxAge, 0, "iRichApp User maxAge 0")
+  equals(iRichApp.Task.cacheStratgy.maxAge, 50, "iRichApp Task maxAge 50")
+
+  ok(!qu.cacheStratgy.useCache, "All User Query does not use Cache")
+  ok(qt.cacheStratgy.useCache, "All Task Query uses Cache")
+  equals(qu.cacheStratgy.maxAge, 0, "All User Query maxAge 0")
+  equals(qt.cacheStratgy.maxAge, 50, "All Task Query maxAge 50")
+
+  store.loadCacheConfig({
+    Record: {
+      "iRichApp.User": {
+        maxAge: 50
+      }
+    }
+  });
+
+  ok(iRichApp.User.cacheStratgy.useCache, "iRichApp User uses Cache")
+  equals(iRichApp.User.cacheStratgy.maxAge, 50, "iRichApp User maxAge 50")
+
+  store.loadCacheConfig({
+    Record: {
+      "iRichApp.NoClass": {
+        maxAge: 50
+      }
+    },
+
+    Query: {
+      "All NoClass": {
+        useCache: true,
+        maxAge: 50
+      }
+    }
+  });
+
+  SC.Query.unregister("All Task")
+  SC.Query.unregister("All User")
+  delete SC.Query._scq_recordTypeCache.remote
+  delete SC.Query._scq_recordTypeCache.local
+})
+
 test("Record Cache", function() {
   var store = iRich.CachedStore.create().from(iRichApp.TaskDataSource.create());
   var fixtures = iRichApp.Task.FIXTURES;
@@ -106,8 +176,7 @@ test("Query Cache", function() {
   var store = iRich.CachedStore.create().from(iRichApp.TaskDataSource.create());
   var fixtures = iRichApp.Task.FIXTURES;
   var qc = SC.Query.build(SC.Query.REMOTE, iRichApp.Task);
-  qc.setName("All Task");
-  store.registerQuery(qc)
+  SC.Query.register(qc, "All Task")
 
   var t = store.find(qc);
   equals(t.objectAt(0).get('description'), iRichApp.Task.CONSTS.OLD.description, "Item Loaded.");
@@ -141,4 +210,8 @@ test("Query Cache", function() {
   var t = store.find(qc);
   t.flush();
   equals(t.objectAt(0).get('description'), iRichApp.Task.CONSTS.ND2.description, "Refreshed!");
+
+  SC.Query.unregister("All Task")
+  delete SC.Query._scq_recordTypeCache.remote
+  delete SC.Query._scq_recordTypeCache.local
 });

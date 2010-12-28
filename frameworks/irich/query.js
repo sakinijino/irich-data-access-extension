@@ -7,20 +7,24 @@ SC.Query.mixin({
     ret.cacheStratgy = {};
     SC.mixin(ret.cacheStratgy, SC.Query.prototype.cacheStratgy)
     return ret;   
+  },
+
+  _registry_with_name: {},
+  register: function(query, name){
+    if (this._registry_with_name[name]!=null &&
+      this._registry_with_name[name] !== query)
+      throw new Error("Query name %@ is conflicted".fmt(name));
+    this._registry_with_name[name] = query;
+  },
+  unregister: function(name){
+    delete this._registry_with_name[name]
+  },
+  getWithName: function(name){
+    return this._registry_with_name[name]
   }
 });
 
 SC.Query.prototype.mixin({
-  _name: null,
-
-  getName: function(){
-    return (this._name!=null) ? this._name : SC.guidFor(this);
-  },
-
-  setName: function(n){
-    if (this._name==null) this._name = n;
-  },
-  
   cacheStratgy: {
     maxAge: 0,
     useCache: false

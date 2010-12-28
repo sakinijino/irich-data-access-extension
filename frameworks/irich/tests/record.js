@@ -1,5 +1,3 @@
-sc_require('../irich_require')
-
 iRichApp = SC.Application.create({
   NAMESPACE: 'Irich',
   VERSION: 'CachedStore Test',

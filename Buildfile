@@ -4,7 +4,7 @@
 # ===========================================================================
 
 # Add initial buildfile information here
-# config :all, :required => :sproutcore
-#
-config :all, :required => [:sproutcore, :irich]
 
+config :foundation, :required => []
+config :local, :required => [:foundation]
+config :irich, :required => [:sproutcore, :local]
