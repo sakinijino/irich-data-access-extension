@@ -64,7 +64,7 @@ test("Record Cache", function() {
   var store = iRich.CachedStore.create().from(iRichApp.TaskDataSource.create());
   var fixtures = iRichApp.Task.FIXTURES;
 
-  iRichApp.Task.setMaxAge(0)
+  iRichApp.Task.setPersistenceStratgy({maxAge:0})
 
   var r = store.find(iRichApp.Task, "task-1");
   equals(r.get('description'), iRichApp.Task.CONSTS.OLD.description, "Item Loaded.");
@@ -74,19 +74,19 @@ test("Record Cache", function() {
   store.flush();
   equals(r.get('description'), iRichApp.Task.CONSTS.ND.description, "Item Updated.");
 
-  iRichApp.Task.setMaxAge(5000)
+  iRichApp.Task.setPersistenceStratgy({maxAge:5000})
   fixtures["task-1"] = SC.clone(iRichApp.Task.CONSTS.ND2);
   var r = store.find(iRichApp.Task, "task-1");
   store.flush();
   equals(r.get('description'), iRichApp.Task.CONSTS.ND.description, "Cached!");
 
-  iRichApp.Task.setMaxAge(50)
+  iRichApp.Task.setPersistenceStratgy({maxAge:50})
   iRichApp.sleep(60);
   var r = store.find(iRichApp.Task, "task-1");
   store.flush();
   equals(r.get('description'), iRichApp.Task.CONSTS.ND2.description, "Refreshed!");
 
-  iRichApp.Task.setMaxAge(0)
+  iRichApp.Task.setPersistenceStratgy({maxAge:0})
   fixtures["task-1"] = SC.clone(iRichApp.Task.CONSTS.OLD);
 });
 
@@ -96,7 +96,7 @@ test("Query Cache", function() {
   var qc = SC.Query.build(SC.Query.REMOTE, iRichApp.Task);
 
   // Single Item Modification
-  qc.setMaxAge(0);
+  qc.setCacheStratgy({maxAge:0})
 
   var t = store.find(qc);
   equals(t.objectAt(0).get('description'), iRichApp.Task.CONSTS.OLD.description, "Item Loaded.");
@@ -105,20 +105,20 @@ test("Query Cache", function() {
   var t = store.find(qc);
   equals(t.objectAt(0).get('description'), iRichApp.Task.CONSTS.ND.description, "Item Updated.");
 
-  qc.setMaxAge(5000)
+  qc.setCacheStratgy({maxAge:5000})
   fixtures["task-1"] = SC.clone(iRichApp.Task.CONSTS.ND2);
   var t = store.find(qc);
   t.flush();
   equals(t.objectAt(0).get('description'), iRichApp.Task.CONSTS.ND.description, "Cached!");
 
-  qc.setMaxAge(50)
+  qc.setCacheStratgy({maxAge:50})
   iRichApp.sleep(60);
   var t = store.find(qc);
   t.flush();
   equals(t.objectAt(0).get('description'), iRichApp.Task.CONSTS.ND2.description, "Refreshed!");
 
   // Array Modification
-  qc.setMaxAge(0)
+  qc.setCacheStratgy({maxAge:0})
 
   var t = store.find(qc);
   equals(t.get('length'), 3, "Three items Loaded.");
@@ -127,27 +127,27 @@ test("Query Cache", function() {
   var t = store.find(qc);
   equals(t.get('length'), 4, "New item Loaded.");
 
-  qc.setMaxAge(5000)
+  qc.setCacheStratgy({maxAge:5000})
   fixtures["task-5"] = SC.clone(iRichApp.Task.CONSTS.T5);
   var t = store.find(qc);
   equals(t.get('length'), 4, "Cached!");
 
-  qc.setMaxAge(50)
+  qc.setCacheStratgy({maxAge:50})
   iRichApp.sleep(60);
   var t = store.find(qc);
   equals(t.get('length'), 5, "Refreshed!");
 
-  qc.setMaxAge(5000)
+  qc.setCacheStratgy({maxAge:5000})
   delete fixtures["task-4"];
   var t = store.find(qc);
   equals(t.get('length'), 5, "Cached!");
 
-  qc.setMaxAge(50)
+  qc.setCacheStratgy({maxAge:50})
   iRichApp.sleep(60);
   var t = store.find(qc);
   equals(t.get('length'), 4, "Refreshed!");
 
-  qc.setMaxAge(0)
+  qc.setCacheStratgy({maxAge:0})
   fixtures["task-1"] = SC.clone(iRichApp.Task.CONSTS.OLD);
   delete fixtures["task-5"];
 });
@@ -162,23 +162,23 @@ test("Query-Record Cache", function() {
   equals(r.get('description'), iRichApp.Task.CONSTS.OLD.description, "Item Loaded.");
   equals(t.objectAt(0).get('description'), iRichApp.Task.CONSTS.OLD.description, "Item in Array Loaded.");
 
-  qc.setMaxAge(5000)
-  iRichApp.Task.setMaxAge(0)
+  qc.setCacheStratgy({maxAge:5000})
+  iRichApp.Task.setPersistenceStratgy({maxAge:0})
   fixtures["task-1"] = SC.clone(iRichApp.Task.CONSTS.ND);
   var r = store.find(iRichApp.Task, "task-1");
   store.flush();
   equals(r.get('description'), iRichApp.Task.CONSTS.ND.description, "Item Updated.");
   equals(t.objectAt(0).get('description'), iRichApp.Task.CONSTS.ND.description, "Item in Array Updated.");
 
-  qc.setMaxAge(0)
-  iRichApp.Task.setMaxAge(5000)
+  qc.setCacheStratgy({maxAge:0})
+  iRichApp.Task.setPersistenceStratgy({maxAge:5000})
   fixtures["task-1"] = SC.clone(iRichApp.Task.CONSTS.ND2);
   var t = store.find(qc);
   equals(r.get('description'), iRichApp.Task.CONSTS.ND2.description, "Item Updated.");
   equals(t.objectAt(0).get('description'), iRichApp.Task.CONSTS.ND2.description, "Item in Array Updated.");
 
-  qc.setMaxAge(0)
-  iRichApp.Task.setMaxAge(5000)
+  qc.setCacheStratgy({maxAge:0})
+  iRichApp.Task.setPersistenceStratgy({maxAge:5000})
   fixtures["task-4"] = SC.clone(iRichApp.Task.CONSTS.T4);
   var t = store.find(qc);
   equals(t.get('length'), 4, "New item Loaded.");
@@ -186,14 +186,14 @@ test("Query-Record Cache", function() {
   var r = store.find(iRichApp.Task, "task-4");
   equals(r.get('description'), iRichApp.Task.CONSTS.T4.description, "Item Loaded by Array Cached.");
 
-  iRichApp.Task.setMaxAge(50)
+  iRichApp.Task.setPersistenceStratgy({maxAge:50})
   iRichApp.sleep(60);
   var r = store.find(iRichApp.Task, "task-4");
   store.flush();
   equals(r.get('description'), iRichApp.Task.CONSTS.T42.description, "Refreshed!");
 
-  qc.setMaxAge(0)
-  iRichApp.Task.setMaxAge(0)
+  qc.setCacheStratgy({maxAge:0})
+  iRichApp.Task.setPersistenceStratgy({maxAge:0})
   fixtures["task-1"] = SC.clone(iRichApp.Task.CONSTS.OLD);
   delete fixtures["task-4"];
 });

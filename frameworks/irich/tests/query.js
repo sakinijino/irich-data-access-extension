@@ -49,7 +49,7 @@ test("Query Registy Conflict", function(){
   ok(qu===SC.Query.getWithName("All Task"), "get with name");
 })
 
-test("Query init", function(){
+test("Set query cache stratgy", function(){
   var q1 = SC.Query.build(SC.Query.REMOTE, iRichApp.Task);
   var q2 = SC.Query.build(SC.Query.LOCAL, iRichApp.Task);
 
@@ -57,11 +57,16 @@ test("Query init", function(){
   ok(!q2.cacheStratgy.useCache, "q2 does not use Cache")
   equals(q1.cacheStratgy.maxAge, 0, "q1 maxAge 0")
   equals(q2.cacheStratgy.maxAge, 0, "q2 maxAge 0")
+  //ok(!q1.cacheStratgy.local, "q1 does not cache local")
+  //ok(!q2.cacheStratgy.local, "q2 does not cache local")
 
-  q1.setMaxAge(100);
+  q1.setCacheStratgy({maxAge: 100, local:true});
+  q2.setCacheStratgy({});
 
   ok(q1.cacheStratgy.useCache, "q1 use Cache")
   ok(!q2.cacheStratgy.useCache, "q2 still does not use Cache")
   equals(q1.cacheStratgy.maxAge, 100, "q1 maxAge 100")
   equals(q2.cacheStratgy.maxAge, 0, "q2 maxAge still 0")
+  //ok(q1.cacheStratgy.local, "q1 cache local")
+  //ok(!q2.cacheStratgy.local, "q2 does not cache local")
 })

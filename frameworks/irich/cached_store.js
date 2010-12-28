@@ -1,12 +1,64 @@
 // ==========================================================================
 // sakinijino.com 
 // ==========================================================================
+sc_require("patches/scuds")
+
 sc_require("record")
 sc_require("query")
 
 var iRich = iRich || {} ; 
 
 iRich.CachedStore = SC.Store.extend({
+  // ..........................................................
+  // LOCAL ADAPTER
+  //
+  //
+
+  LOCAL_CACHE_KEY: "irich.cache",
+  _local_version: "",
+  _local_cache_record_types: [],
+
+  _lscKey: function(recordTypeStr){
+    var prefix = this.LOCAL_CACHE_KEY+"."+recordTypeStr
+    if (SC.empty(this._local_version)) return prefix;
+    return prefix+".v."+_local_version;
+  },
+
+  _recordTypeLocalCacheAdapter: function(recordTypeStr){
+    var key = this._lscKey(recordTypeStr)
+    return SCUDS.LocalStorageAdapterFactory.getAdapter(key);
+  },
+
+  loadLocalCachedRecords: function(){
+    for (var i=0; i<this._local_cache_record_types.length; ++i) {
+      var recordType = this._local_cache_record_types[i]
+      var recordTypeStr = SC._object_className(recordType)
+      var adp = this._recordTypeLocalCacheAdapter(recordTypeStr)
+      this.loadRecords(recordType, this._getHashesFromLocalCache(recordTypeStr));
+    }
+  },
+
+  _getHashesFromLocalCache: function(recordTypeStr) {
+    return this._recordTypeLocalCacheAdapter(recordTypeStr).getAll();
+  },
+
+  _saveRecordToLocalCache: function(recordTypeStr, storeKey, entryTime) {
+    var adapter = this._recordTypeLocalCacheAdapter(recordTypeStr)
+    var et = {}
+    et[this.LOCAL_CACHE_KEY + ".entryTime"] = entryTime.getTime();
+    adapter.save(
+      SC.mixin(et, this.readDataHash(storeKey)), 
+      this.idFor(storeKey)
+    );
+  },
+
+  clearLocalCache: function(){
+    for (var i=0; i<this._local_cache_record_types.length; ++i) {
+      var r = this._local_cache_record_types[i]
+      var adp = this._recordTypeLocalCacheAdapter(SC._object_className(r));
+      adp.nuke();
+    }
+  },
 
   // ..........................................................
   // QUERY CACHE
@@ -74,11 +126,16 @@ iRich.CachedStore = SC.Store.extend({
     return this.recordCaches[storeKey] || {}
   },
 
-  refreshRecordCacheInfo: function(storeKey) {
-    var now = new Date();
+  refreshRecordCacheInfo: function(storeKey, et) {
+    var entryTime = et ? et : new Date();
     this.recordCaches[storeKey] ? 
-      this.recordCaches[storeKey].entryTime =now:
-      this.recordCaches[storeKey] = {entryTime: now};
+      this.recordCaches[storeKey].entryTime =entryTime:
+      this.recordCaches[storeKey] = {entryTime: entryTime};
+
+    var r =  SC.Store.recordTypeFor(storeKey);
+    if (r!=null && r.persistenceStratgy.localCache) {
+      this._saveRecordToLocalCache(SC._object_className(r), storeKey, entryTime)   
+    }
     return this;
   },
 
@@ -90,8 +147,8 @@ iRich.CachedStore = SC.Store.extend({
       K = SC.Record,
       now = new Date();
 
-      return (!recordType.cacheStratgy.useCache) || 
-          ((status === K.READY_CLEAN) && (entryTime.getTime() + recordType.cacheStratgy.maxAge < now.getTime() )) 
+      return (!recordType.persistenceStratgy.useCache) || 
+          ((status === K.READY_CLEAN) && (entryTime.getTime() + recordType.persistenceStratgy.maxAge < now.getTime() )) 
   },
 
   _findRecord: function(recordType, id) {
@@ -123,12 +180,18 @@ iRich.CachedStore = SC.Store.extend({
       throw K.BAD_STATE_ERROR ;
     } else status = K.READY_CLEAN ;
 
+    var localCacheEntryTime = null
+    if (dataHash[this.LOCAL_CACHE_KEY+".entryTime"]) {
+      localCacheEntryTime = new Date(dataHash[this.LOCAL_CACHE_KEY+".entryTime"])
+      delete dataHash[this.LOCAL_CACHE_KEY+".entryTime"]
+    }
+
     this.writeStatus(storeKey, status) ;
     if (dataHash) this.writeDataHash(storeKey, dataHash, status) ;
     if (newId) SC.Store.replaceIdFor(storeKey, newId);
     
     statusOnly = dataHash || newId ? NO : YES;
-    this.refreshRecordCacheInfo(storeKey); //refresh record entry time
+    this.refreshRecordCacheInfo(storeKey, localCacheEntryTime); //refresh record entry time
     this.dataHashDidChange(storeKey, null, statusOnly);
     
     return this ;
@@ -140,12 +203,18 @@ iRich.CachedStore = SC.Store.extend({
     if(storeKey===undefined) storeKey = recordType.storeKeyFor(id);
     status = this.readStatus(storeKey);
     if(status==K.EMPTY || status==K.ERROR || status==K.READY_CLEAN || status==K.DESTROYED_CLEAN) {
-      
+
+      var localCacheEntryTime = null
+      if (dataHash[this.LOCAL_CACHE_KEY+".entryTime"]) {
+        localCacheEntryTime = new Date(dataHash[this.LOCAL_CACHE_KEY+".entryTime"])
+        delete dataHash[this.LOCAL_CACHE_KEY+".entryTime"]
+      }
+
       status = K.READY_CLEAN;
       if(dataHash===undefined) this.writeStatus(storeKey, status) ;
       else this.writeDataHash(storeKey, dataHash, status) ;
 
-      this.refreshRecordCacheInfo(storeKey); //refresh record entry time
+      this.refreshRecordCacheInfo(storeKey, localCacheEntryTime); //refresh record entry time
       this.dataHashDidChange(storeKey);
       
       return storeKey;
@@ -160,7 +229,7 @@ iRich.CachedStore = SC.Store.extend({
   reset: function() {
     this.recordCaches = {};
     this.queryCaches = {};
-    this.queryRegistry = {};
+    this._local_cache_record_types = [];
     
     this.superclass();
   },
@@ -183,18 +252,23 @@ iRich.CachedStore = SC.Store.extend({
   },
 
   loadCacheConfig: function(conf) {
-    conf = conf ? conf : CACHE_STRATGY_CONFIG
+    conf = conf ? conf : PERSISTENCE_CONFIG
+
     if (conf.Record) {
       for (var rname in conf.Record) {
         var r = SC.objectForPropertyPath(rname)
-        if (r) r.setMaxAge(conf.Record[rname].maxAge)
+        if (r) {
+          r.setPersistenceStratgy(conf.Record[rname])
+          if (conf.Record[rname].localCache) this._local_cache_record_types.push(r)
+        }
       }
     }
+    this.loadLocalCachedRecords();
 
     if (conf.Query) {
       for (var qname in conf.Query) {
         var q = SC.Query.getWithName(qname)
-        if (q) q.setMaxAge(conf.Query[qname].maxAge)
+        if (q) q.setCacheStratgy(conf.Query[qname])
       }
     }
   }

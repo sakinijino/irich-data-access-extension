@@ -67,7 +67,7 @@ test("Cache Config Load", function(){
   var qu = SC.Query.build(SC.Query.REMOTE, iRichApp.User);
   SC.Query.register(qu, "All User")
 
-  CACHE_STRATGY_CONFIG = {
+  PERSISTENCE_CONFIG = {
     Record: {
       "iRichApp.Task": {
         useCache: true,
@@ -87,12 +87,12 @@ test("Cache Config Load", function(){
     }
   }
   store.loadCacheConfig();
-  delete CACHE_STRATGY_CONFIG;
+  delete PERSISTENCE_CONFIG;
 
-  ok(!iRichApp.User.cacheStratgy.useCache, "iRichApp User does not use Cache")
-  ok(iRichApp.Task.cacheStratgy.useCache, "iRichApp Task uses Cache")
-  equals(iRichApp.User.cacheStratgy.maxAge, 0, "iRichApp User maxAge 0")
-  equals(iRichApp.Task.cacheStratgy.maxAge, 50, "iRichApp Task maxAge 50")
+  ok(!iRichApp.User.persistenceStratgy.useCache, "iRichApp User does not use Cache")
+  ok(iRichApp.Task.persistenceStratgy.useCache, "iRichApp Task uses Cache")
+  equals(iRichApp.User.persistenceStratgy.maxAge, 0, "iRichApp User maxAge 0")
+  equals(iRichApp.Task.persistenceStratgy.maxAge, 50, "iRichApp Task maxAge 50")
 
   ok(!qu.cacheStratgy.useCache, "All User Query does not use Cache")
   ok(qt.cacheStratgy.useCache, "All Task Query uses Cache")
@@ -107,8 +107,8 @@ test("Cache Config Load", function(){
     }
   });
 
-  ok(iRichApp.User.cacheStratgy.useCache, "iRichApp User uses Cache")
-  equals(iRichApp.User.cacheStratgy.maxAge, 50, "iRichApp User maxAge 50")
+  ok(iRichApp.User.persistenceStratgy.useCache, "iRichApp User uses Cache")
+  equals(iRichApp.User.persistenceStratgy.maxAge, 50, "iRichApp User maxAge 50")
 
   store.loadCacheConfig({
     Record: {
@@ -143,7 +143,7 @@ test("Record Cache", function() {
   store.flush();
   equals(r.get('description'), iRichApp.Task.CONSTS.ND.description, "Item Updated.");
 
-  CACHE_STRATGY_CONFIG = {
+  PERSISTENCE_CONFIG = {
     Record: {
       "iRichApp.Task": {
         useCache: true,
@@ -159,7 +159,7 @@ test("Record Cache", function() {
     }
   }
   store.loadCacheConfig();
-  delete CACHE_STRATGY_CONFIG;
+  delete PERSISTENCE_CONFIG;
 
   fixtures["task-1"] = SC.clone(iRichApp.Task.CONSTS.ND2);
   var r = store.find(iRichApp.Task, "task-1");

@@ -30,7 +30,8 @@ SC.Query.prototype.mixin({
     useCache: false
   },
 
-  setMaxAge: function(maxAge){
+  setCacheStratgy: function(stratgy){
+    var maxAge = stratgy.maxAge;
     if (maxAge!=null && maxAge > 0) {
       this.cacheStratgy.maxAge = maxAge;
       this.cacheStratgy.useCache = true;

@@ -1,6 +1,8 @@
-CACHE_STRATGY_CONFIG = {
+PERSISTENCE_CONFIG = {
   Record: {
     "iRichApp.TASK": {
+      location: remote,
+      localCache: true,
       useCache: true,
       maxAge: 50 //ms
     }
