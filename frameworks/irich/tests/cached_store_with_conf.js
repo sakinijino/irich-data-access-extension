@@ -109,7 +109,7 @@ test("Cache Config Load", function(){
       }
     }
   }
-  store.loadCacheConfig();
+  store.loadPersistenceConfig();
   delete PERSISTENCE_CONFIG;
 
   ok(!iRichApp.User.persistenceStratgy.useCache, "iRichApp User does not use Cache")
@@ -122,7 +122,7 @@ test("Cache Config Load", function(){
   equals(qu.cacheStratgy.maxAge, 0, "All User Query maxAge 0")
   equals(qt.cacheStratgy.maxAge, 50, "All Task Query maxAge 50")
 
-  store.loadCacheConfig({
+  store.loadPersistenceConfig({
     Record: {
       "iRichApp.User": {
         maxAge: 50
@@ -133,7 +133,7 @@ test("Cache Config Load", function(){
   ok(iRichApp.User.persistenceStratgy.useCache, "iRichApp User uses Cache")
   equals(iRichApp.User.persistenceStratgy.maxAge, 50, "iRichApp User maxAge 50")
 
-  store.loadCacheConfig({
+  store.loadPersistenceConfig({
     Record: {
       "iRichApp.NoClass": {
         maxAge: 50
@@ -181,7 +181,7 @@ test("Record Cache", function() {
       }
     }
   }
-  store.loadCacheConfig();
+  store.loadPersistenceConfig();
   delete PERSISTENCE_CONFIG;
 
   fixtures["task-1"] = SC.clone(iRichApp.Task.CONSTS.ND2);
@@ -197,7 +197,7 @@ test("Record Cache", function() {
 
 test("CUD Record Cache", function() {
   var store = iRich.CachedStore.create().from(iRichApp.TaskDataSource.create());
-  store.loadCacheConfig({
+  store.loadPersistenceConfig({
     Record: {
       "iRichApp.Task": {
         useCache: true,
@@ -274,7 +274,7 @@ test("Query Cache", function() {
   var t = store.find(qc);
   equals(t.objectAt(0).get('description'), iRichApp.Task.CONSTS.ND.description, "Item Updated.");
 
-  store.loadCacheConfig({
+  store.loadPersistenceConfig({
     Record: {
       "iRichApp.Task": {
         useCache: true,

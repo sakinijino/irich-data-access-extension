@@ -153,7 +153,7 @@ test("Query-Record Local Cache", function() {
   var qc = SC.Query.build(SC.Query.REMOTE, iRichApp.Task);
   SC.Query.register(qc, "All Task")
 
-  store.loadCacheConfig();
+  store.loadPersistenceConfig();
 
   fixtures["task-4"] = SC.clone(iRichApp.Task.CONSTS.T4);
 
@@ -164,7 +164,7 @@ test("Query-Record Local Cache", function() {
   equals(r.get('description'), iRichApp.Task.CONSTS.T4.description, "Item Loaded by Array Cached.");
 
   var store2 = iRich.CachedStore.create().from(iRichApp.TaskDataSource.create());
-  store2.loadCacheConfig();
+  store2.loadPersistenceConfig();
   var r = store2.find(iRichApp.Task, "task-4");
   equals(r.get('description'), iRichApp.Task.CONSTS.T4.description, "Item Loaded by Array Local Shared Cached.");
 

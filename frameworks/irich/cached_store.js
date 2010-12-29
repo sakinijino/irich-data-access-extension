@@ -5,12 +5,17 @@ sc_require("patches/scuds")
 
 sc_require("record")
 sc_require("query")
+sc_require("core")
 
 var iRich = iRich || {} ; 
 
 iRich.CachedStore = SC.Store.extend({
   // ..........................................................
-  // LOCAL ADAPTER
+  // LOCAL DATA SOURCE
+  _lds: null,
+
+  // ..........................................................
+  // LOCAL CACHE ADAPTER
   //
   //
 
@@ -267,8 +272,11 @@ iRich.CachedStore = SC.Store.extend({
     }
   },
 
-  loadCacheConfig: function(conf) {
+  loadPersistenceConfig: function(conf) {
     conf = conf ? conf : PERSISTENCE_CONFIG
+    if (conf.Version) {
+      this._local_version = conf.Version
+    }
 
     if (conf.Record) {
       for (var rname in conf.Record) {

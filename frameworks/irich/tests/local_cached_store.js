@@ -148,7 +148,7 @@ test("Record Local Cache", function() {
   var store_with_ds = iRich.CachedStore.create().from(iRichApp.RichAppDataSource.create());
   var fixtures = iRichApp.FIXTURES;
 
-  store_with_ds.loadCacheConfig();
+  store_with_ds.loadPersistenceConfig();
   var r = store_with_ds.find(iRichApp.Task, "task-1");
   equals(r.get('description'), iRichApp.Task.CONSTS.OLD.description, "Item Loaded.");
   
@@ -158,7 +158,7 @@ test("Record Local Cache", function() {
   equals(r.get('description'), iRichApp.Task.CONSTS.OLD.description, "Cached!");
 
   var store_with_ds2 = iRich.CachedStore.create().from(iRichApp.RichAppDataSource.create());
-  store_with_ds2.loadCacheConfig();
+  store_with_ds2.loadPersistenceConfig();
   var r = store_with_ds2.find(iRichApp.Task, "task-1");
   store_with_ds2.flush();
   equals(r.get('description'), iRichApp.Task.CONSTS.OLD.description, "Local Shared Cached!");
@@ -171,7 +171,7 @@ test("Record Local Cache", function() {
   store_with_ds.clearLocalCache();
 
   var store_with_ds3 = iRich.CachedStore.create().from(iRichApp.RichAppDataSource.create());
-  store_with_ds3.loadCacheConfig();
+  store_with_ds3.loadPersistenceConfig();
   
   fixtures["task-1"] = SC.clone(iRichApp.Task.CONSTS.ND2);
   var r = store_with_ds3.find(iRichApp.Task, "task-1");
@@ -183,7 +183,7 @@ test("Record Local Cache", function() {
 
 test("CUD Record Local Cache", function() {
   var store = iRich.CachedStore.create().from(iRichApp.RichAppDataSource.create());
-  store.loadCacheConfig();
+  store.loadPersistenceConfig();
   var fixtures = iRichApp.FIXTURES;
 
   var r = store.createRecord(iRichApp.Task, {});
@@ -198,7 +198,7 @@ test("CUD Record Local Cache", function() {
   store.flush();
   equals(r.get('description'), "New Item "+r.get('guid'), "Item Cached.");
   var store2 = iRich.CachedStore.create().from(iRichApp.RichAppDataSource.create());
-  store2.loadCacheConfig();
+  store2.loadPersistenceConfig();
   var r2 = store2.find(iRichApp.Task, r.get('guid'));
   store2.flush();
   equals(r2.get('description'), "New Item "+r2.get('guid'), "Local Shared Cached!");
@@ -222,7 +222,7 @@ test("CUD Record Local Cache", function() {
   store.flush();
   equals(r.get('description'), "Updated", "Item Cached.");
   var store2 = iRich.CachedStore.create().from(iRichApp.RichAppDataSource.create());
-  store2.loadCacheConfig();
+  store2.loadPersistenceConfig();
   var r2 = store2.find(iRichApp.Task, r.get('guid'));
   store2.flush();
   equals(r2.get('description'), "Updated", "Local Shared Cached!");
@@ -246,7 +246,7 @@ test("CUD Record Local Cache", function() {
   var r = store.find(iRichApp.Task, guid);
   equals(store.readStatus(r.storeKey), SC.Record.ERROR, "Find Destroyed Record")
   var store2 = iRich.CachedStore.create().from(iRichApp.RichAppDataSource.create());
-  store2.loadCacheConfig();
+  store2.loadPersistenceConfig();
   ok(store2.isRecordExpired(iRichApp.Task, null, storeKey), "Expired after destroyed")
   var r2 = store2.find(iRichApp.Task, guid);
   equals(store2.readStatus(r2.storeKey), SC.Record.ERROR, "Find Destroyed Record")
@@ -258,7 +258,7 @@ test("Multiple Records Local Cache", function() {
   var s1 = iRich.CachedStore.create().from(iRichApp.RichAppDataSource.create());
   var fixtures = iRichApp.FIXTURES;
 
-  s1.loadCacheConfig();
+  s1.loadPersistenceConfig();
   var r = s1.find(iRichApp.Task, "task-1");
   equals(r.get('description'), iRichApp.Task.CONSTS.OLD.description, "Task1 Loaded.");
   var r = s1.find(iRichApp.Task, "task-2");
@@ -285,7 +285,7 @@ test("Multiple Records Local Cache", function() {
 
   iRichApp.sleep(iRichApp.Task.persistenceStratgy.maxAge)
   var s2 = iRich.CachedStore.create().from(iRichApp.RichAppDataSource.create());
-  s2.loadCacheConfig();
+  s2.loadPersistenceConfig();
 
   var t1 = s2.find(iRichApp.Task, "task-1");
   var t2 = s2.find(iRichApp.Task, "task-2");
@@ -302,7 +302,7 @@ test("Multiple Records Local Cache", function() {
 
   iRichApp.sleep(iRichApp.User.persistenceStratgy.maxAge - iRichApp.Task.persistenceStratgy.maxAge)
   var s3 = iRich.CachedStore.create().from(iRichApp.RichAppDataSource.create());
-  s3.loadCacheConfig();
+  s3.loadPersistenceConfig();
   var t1 = s3.find(iRichApp.Task, "task-1");
   var t2 = s3.find(iRichApp.Task, "task-2");
   var u1 = s3.find(iRichApp.User, "user-1");
@@ -319,7 +319,7 @@ test("Multiple Records Local Cache", function() {
   fixtures["user-2"] = SC.clone(iRichApp.User.CONSTS.T5);
 
   var s4 = iRich.CachedStore.create().from(iRichApp.RichAppDataSource.create());
-  s4.loadCacheConfig();
+  s4.loadPersistenceConfig();
   var u1 = s4.find(iRichApp.User, "user-1");
   var u2 = s4.find(iRichApp.User, "user-2");
   s3.flush();

@@ -1,4 +1,5 @@
 PERSISTENCE_CONFIG = {
+  Version: "1.0.0",
   Record: {
     "iRichApp.TASK": {
       location: remote,
