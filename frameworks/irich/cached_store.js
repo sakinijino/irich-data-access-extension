@@ -132,7 +132,7 @@ iRich.CachedStore = SC.Store.extend({
       this.recordCaches[storeKey].entryTime =entryTime:
       this.recordCaches[storeKey] = {entryTime: entryTime};
 
-    var r =  SC.Store.recordTypeFor(storeKey);
+    var r = SC.Store.recordTypeFor(storeKey);
     if (r!=null && r.persistenceStratgy.localCache) {
       this._saveRecordToLocalCache(SC._object_className(r), storeKey, entryTime)   
     }
@@ -148,7 +148,7 @@ iRich.CachedStore = SC.Store.extend({
       now = new Date();
 
       return (!recordType.persistenceStratgy.useCache) || 
-          ((status === K.READY_CLEAN) && (entryTime.getTime() + recordType.persistenceStratgy.maxAge < now.getTime() )) 
+          ((status !== K.READY_CLEAN) || (entryTime.getTime() + recordType.persistenceStratgy.maxAge < now.getTime() )) 
   },
 
   _findRecord: function(recordType, id) {
@@ -220,6 +220,22 @@ iRich.CachedStore = SC.Store.extend({
       return storeKey;
     }
     return NO;
+  },
+
+  dataSourceDidDestroy: function(storeKey) {
+    var status = this.readStatus(storeKey), K = SC.Record;
+
+    if (!(status & K.BUSY)) {
+      throw K.BAD_STATE_ERROR;
+    }
+    else{
+      status = K.DESTROYED_CLEAN ;
+    } 
+    this.removeDataHash(storeKey, status) ;
+    this.refreshRecordCacheInfo(storeKey, SC.Record.EXPIRED_ENTRY_TIME); //refresh record entry time
+    this.dataHashDidChange(storeKey);
+
+    return this ;
   },
 
   // ..........................................................

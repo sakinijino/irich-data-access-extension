@@ -9,6 +9,7 @@ module("iRich.CachedStoreWithConf", {
     iRichApp.Task = SC.Record.extend({isDone: SC.Record.attr(Boolean), description: SC.Record.attr(String)});
     iRichApp.User = SC.Record.extend({isDone: SC.Record.attr(Boolean), description: SC.Record.attr(String)});
 
+    iRichApp.Task.newId = 10;
     iRichApp.Task.CONSTS = {
       OLD:  { "guid": "task-1", "description": "Item OLD", "isDone": false },
       ND: { "guid": "task-1", "description": "Item ND", "isDone": false },
@@ -40,8 +41,30 @@ module("iRich.CachedStoreWithConf", {
       },
       retrieveRecord: function(store, storeKey) {
         var id = store.idFor(storeKey);
-        store.dataSourceDidComplete(storeKey, iRichApp.Task.FIXTURES[id]);
+        if (iRichApp.Task.FIXTURES[id])
+          store.dataSourceDidComplete(storeKey, iRichApp.Task.FIXTURES[id]);
+        else
+          store.dataSourceDidError(storeKey, null);
         return YES;
+      }, 
+      createRecord: function(store, storeKey) {
+        var newId="task-"+iRichApp.Task.newId++;
+        iRichApp.Task.FIXTURES[newId] = { "guid": newId, "description": "New Item "+newId, "isDone": false }
+        store.dataSourceDidComplete(storeKey, iRichApp.Task.FIXTURES[newId], newId);
+        return YES
+      },
+      updateRecord: function(store, storeKey) {
+        var id = store.idFor(storeKey);
+        var hash = store.readDataHash(storeKey)
+        iRichApp.Task.FIXTURES[id].description = hash.description;
+        iRichApp.Task.FIXTURES[id].isDone = hash.isDone;
+        store.dataSourceDidComplete(storeKey, iRichApp.Task.FIXTURES[id]);
+        return YES
+      },
+      destroyRecord: function(store, storeKey) {
+        var id = store.idFor(storeKey);
+        delete iRichApp.Task.FIXTURES[id]
+        store.dataSourceDidDestroy(storeKey);
       }
     });
 
@@ -170,6 +193,72 @@ test("Record Cache", function() {
   var r = store.find(iRichApp.Task, "task-1");
   store.flush();
   equals(r.get('description'), iRichApp.Task.CONSTS.ND2.description, "Refreshed!");
+});
+
+test("CUD Record Cache", function() {
+  var store = iRich.CachedStore.create().from(iRichApp.TaskDataSource.create());
+  store.loadCacheConfig({
+    Record: {
+      "iRichApp.Task": {
+        useCache: true,
+        maxAge: 50
+      }
+    },
+
+    Query: {
+      "All Task": {
+        useCache: true,
+        maxAge: 50
+      }
+    }
+  });
+
+  store.set('commitRecordsAutomatically', false)
+  var fixtures = iRichApp.Task.FIXTURES;
+
+  var r = store.createRecord(iRichApp.Task, {});
+  store.commitRecord(iRichApp.Task, null, r.storeKey)
+  store.flush();
+  ok(r.get('guid')!=null, "Item Created.")
+  equals(r.get('description'), "New Item "+r.get('guid'), "Item Desp Set.");
+
+  
+  fixtures[r.get('guid')] = SC.clone(iRichApp.Task.CONSTS.ND);
+  fixtures[r.get('guid')].guid = r.get('guid')
+  var r = store.find(iRichApp.Task, r.get('guid'));
+  store.flush();
+  equals(r.get('description'), "New Item "+r.get('guid'), "Item Cached.");
+
+  iRichApp.sleep(60);
+  var r = store.find(iRichApp.Task, r.get('guid'));
+  store.flush();
+  equals(r.get('description'), iRichApp.Task.CONSTS.ND.description, "Refreshed!");
+
+  r.set("description", "Updated")
+  store.commitRecord(iRichApp.Task, null, r.storeKey)
+  store.flush();
+  equals(r.get('description'), "Updated", "Item Updated");
+
+  fixtures[r.get('guid')] = SC.clone(iRichApp.Task.CONSTS.ND);
+  fixtures[r.get('guid')].guid = r.get('guid')
+  var r = store.find(iRichApp.Task, r.get('guid'));
+  store.flush();
+  equals(r.get('description'), "Updated", "Item Cached.");
+
+  iRichApp.sleep(60);
+  var r = store.find(iRichApp.Task, r.get('guid'));
+  store.flush();
+  equals(r.get('description'), iRichApp.Task.CONSTS.ND.description, "Refreshed!");
+
+  var guid = r.get('guid')
+  ok(!store.isRecordExpired(iRichApp.Task, null, r.storeKey), "Not Expired before destroyed")
+  store.destroyRecord(iRichApp.Task, r.get('guid'))
+  store.commitRecord(iRichApp.Task, null, r.storeKey)
+  equals(store.readStatus(r.storeKey), SC.Record.DESTROYED_CLEAN, "Destroyed!")
+  ok(store.isRecordExpired(iRichApp.Task, null, r.storeKey), "Expired after destroyed")
+  
+  var r = store.find(iRichApp.Task, guid);
+  equals(store.readStatus(r.storeKey), SC.Record.ERROR, "Find Destroyed Record")
 });
 
 test("Query Cache", function() {
