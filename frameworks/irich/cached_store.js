@@ -26,7 +26,7 @@ iRich.CachedStore = SC.Store.extend({
   _lscKey: function(recordTypeStr){
     var prefix = this.LOCAL_CACHE_KEY+"."+recordTypeStr
     if (SC.empty(this._local_version)) return prefix;
-    return prefix+".v."+_local_version;
+    return prefix+".v."+this._local_version;
   },
 
   _recordTypeLocalCacheAdapter: function(recordTypeStr){
