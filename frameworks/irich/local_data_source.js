@@ -14,7 +14,7 @@ iRich.LocalDataSource = SC.DataSource.extend({
   _lscKey: function(recordTypeStr){
     var prefix = this.LOCAL_STORAGE_KEY+"."+recordTypeStr
     if (SC.empty(this._local_version)) return prefix;
-    return prefix+".v."+_local_version;
+    return prefix+".v."+this._local_version;
   },
 
   _recordTypeLocalStorageAdapter: function(recordTypeStr){
