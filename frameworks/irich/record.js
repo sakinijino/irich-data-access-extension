@@ -1,5 +1,6 @@
 SC.Record.REMOTE = "remote"
 SC.Record.LOCAL = "local"
+SC.Record.PORTABLE = "portable"
 
 SC.Record.mixin({
   EXPIRED_ENTRY_TIME: new Date(-1, 0, 0),

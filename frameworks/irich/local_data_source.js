@@ -9,6 +9,8 @@ iRich.LocalDataSource = SC.DataSource.extend({
   LOCAL_STORAGE_KEY: "irich.local",
   _local_version: "",
   _local_storage_record_types: [],
+  _storage_adapter_class: null,
+  _support_type: SC.Record.LOCAL,
   _sync_model: false,
 
   _lscKey: function(recordTypeStr){
@@ -19,7 +21,10 @@ iRich.LocalDataSource = SC.DataSource.extend({
 
   _recordTypeLocalStorageAdapter: function(recordTypeStr){
     var key = this._lscKey(recordTypeStr)
-    return SCUDS.LocalStorageAdapterFactory.getAdapter(key);
+    SCUDS.LocalStorageAdapterFactory._adapterClass = this._storage_adapter_class
+    var adp =  SCUDS.LocalStorageAdapterFactory.getAdapter(key);
+    SCUDS.LocalStorageAdapterFactory._adapterClass = null
+    return adp;
   },
 
   loadPersistenceConfig: function(conf) {
@@ -28,7 +33,7 @@ iRich.LocalDataSource = SC.DataSource.extend({
     if (conf.Record)
       for (var rname in conf.Record) {
         var r = SC.objectForPropertyPath(rname)
-        if (r &&conf.Record[rname].location == SC.Record.LOCAL) 
+        if (r &&conf.Record[rname].location == this._support_type) 
           this._local_storage_record_types.push(r)
       }
   },
@@ -45,7 +50,7 @@ iRich.LocalDataSource = SC.DataSource.extend({
   fetch: function(store, query) {
     var recordType = query.get('recordType')
     if (SC.typeOf(recordType) !== SC.T_CLASS ||
-      recordType.persistenceStratgy.location != SC.Record.LOCAL) return NO;
+      recordType.persistenceStratgy.location != this._support_type) return NO;
     
     var recordTypeStr = SC._object_className(recordType)
 
@@ -84,7 +89,7 @@ iRich.LocalDataSource = SC.DataSource.extend({
   },
 
   _isLocalStorageRequest: function(store, storeKey){
-    return (store.recordTypeFor(storeKey).persistenceStratgy.location == SC.Record.LOCAL)
+    return (store.recordTypeFor(storeKey).persistenceStratgy.location == this._support_type)
   },
 
   _localStorageRequestDispatcher: function(store, storeKey, action){
