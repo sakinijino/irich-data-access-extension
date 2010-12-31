@@ -1,4 +1,4 @@
-TEMP_TEST_STORAGE_PATH = "e:\\tmp\\test\\test.txt"
+TEMP_TEST_STORAGE_PATH = "d:\\tmp\\todos-portable-test"
 
 iRichApp = SC.Application.create({
   NAMESPACE: 'Irich',
@@ -203,6 +203,103 @@ test("Cascade Portable Sources", function() {
 
   var appds = iRichApp.RichAppDataSource.create();
   store.cascade(lds, appds)
+
+  var t1 = store.createRecord(iRichApp.Task, {"description": "Task 1", "isDone": false})
+  var t2 = store.createRecord(iRichApp.Task, {"description": "Task 2", "isDone": true})
+  var u1 = store.createRecord(iRichApp.User, {"description": "User 1", "isDone": false})
+  var u2 = store.createRecord(iRichApp.User, {"description": "User 2", "isDone": true})
+  store.commitRecords()
+
+  var guid1 = t1.get("guid")
+  var guid2 = t2.get("guid")
+  var guid3 = u1.get("guid")
+  var guid4 = u2.get("guid")
+
+  store.reset();
+  var t1 = store.find(iRichApp.Task, guid1)
+  var t2 = store.find(iRichApp.Task, guid2)
+  var u1 = store.find(iRichApp.User, guid3)
+  var u2 = store.find(iRichApp.User, guid4)
+
+  equals(t1.get("guid"), guid1, "Task1 save and load")
+  equals(t2.get("guid"), guid2, "Task2 save and load")
+  equals(u1.get("guid"), guid3, "User1 save and load")
+  equals(u2.get("guid"), guid4, "User2 save and load")
+
+  t1.set("description", "Update Task 1")
+  t2.set("description", "Update Task 2")
+  t1.set("isDone", true)
+  u1.set("description", "Update User 1")
+  u2.set("description", "Update User 2")
+  u1.set("isDone", true)
+  store.commitRecords()
+
+  store.reset();
+  var t1 = store.find(iRichApp.Task, guid1)
+  var t2 = store.find(iRichApp.Task, guid2)
+  var u1 = store.find(iRichApp.User, guid3)
+  var u2 = store.find(iRichApp.User, guid4)
+
+  equals(t1.get("description"), "Update Task 1", "Task1 update")
+  equals(t1.get("isDone"), true, "Task1 finished")
+  equals(t2.get("description"), "Update Task 2", "Task2 update")
+  equals(u1.get("description"), "Update User 1", "User1 update")
+  equals(u1.get("isDone"), true, "User1 finished")
+  equals(u2.get("description"), "Update User 2", "User2 update")
+
+  store.destroyRecord(iRichApp.Task, guid1)
+  store.destroyRecord(iRichApp.Task, guid2)
+  store.destroyRecord(iRichApp.User, guid3)
+  store.destroyRecord(iRichApp.User, guid4)
+  store.commitRecords()
+
+  store.reset();
+  var t1 = store.find(iRichApp.Task, guid1)
+  var t2 = store.find(iRichApp.Task, guid2)
+  var u1 = store.find(iRichApp.User, guid3)
+  var u2 = store.find(iRichApp.User, guid4)
+  equals(store.readStatus(t1.storeKey), SC.Record.ERROR, "Task1 Destroyed")
+  equals(store.readStatus(t2.storeKey), SC.Record.ERROR, "Task2 Destroyed")
+  equals(store.readStatus(u1.storeKey), SC.Record.ERROR, "User1 Destroyed")
+  equals(store.readStatus(u2.storeKey), SC.Record.ERROR, "User2 Destroyed")
+
+  lds.clearlocalStorage();
+})
+
+test("Two Classes with Portable Sources", function() {
+  if (!iRich.portableStorage) throw "Not Support Portable Storage"
+  if (!iRich.portableStorage.open(TEMP_TEST_STORAGE_PATH)) throw "Can not Open Test File"
+
+  iRich.portableStorage.open(TEMP_TEST_STORAGE_PATH)
+
+  var store = iRich.CachedStore.create();
+  store.loadPersistenceConfig({
+    Record: {
+      "iRichApp.Task": {
+        location: SC.Record.PORTABLE
+      },
+
+      "iRichApp.User": {
+        location: SC.Record.PORTABLE
+      }
+    }
+  })
+  
+  var lds = iRich.PortableDataSource.create();
+  lds.loadPersistenceConfig({
+    Record: {
+      "iRichApp.Task": {
+        location: SC.Record.PORTABLE
+      },
+
+      "iRichApp.User": {
+        location: SC.Record.PORTABLE
+      }
+    }
+  })
+  lds._sync_model = true // for test
+
+  store.from(lds)
 
   var t1 = store.createRecord(iRichApp.Task, {"description": "Task 1", "isDone": false})
   var t2 = store.createRecord(iRichApp.Task, {"description": "Task 2", "isDone": true})
