@@ -1,0 +1,8 @@
+<!ENTITY iRichPortableStorage.label "Your localized menuitem">
+<!ENTITY iRichPortableStorageContext.label "Your Menuitem">
+<!ENTITY iRichPortableStorageContext.accesskey "Y">
+<!ENTITY iRichPortableStorageToolbarButton.label "Your Toolbar Button">
+<!ENTITY iRichPortableStorageToolbarButton.tooltip "This is your toolbar button!">
+<!ENTITY iRichPortableStorageSidebar.label "Your Sidebar">
+<!ENTITY iRichPortableStorageToolbar.name  "example">
+<!ENTITY iRichPortableStorageToolbar.label "This is an example toolbar. You can hide it under View &gt; toolbars &gt; &iRichPortableStorageToolbar.name;">
