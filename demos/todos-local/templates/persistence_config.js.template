@@ -1,0 +1,18 @@
+PERSISTENCE_CONFIG = {
+  Version: "1.0.0",
+  Record: {
+    "iRichApp.TASK": {
+      location: remote,
+      localCache: true,
+      useCache: true,
+      maxAge: 50 //ms
+    }
+  },
+
+  Query: {
+    "All Task": {
+      useCache: true,
+      maxAge: 50 //ms
+    }
+  }
+}
